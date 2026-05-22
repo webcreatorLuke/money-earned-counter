@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Money Earned Counter</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f5f5;
+      --card: #ffffff;
+      --border: #e8e8e8;
+      --border-dark: #d4d4d4;
+      --text-primary: #111111;
+      --text-secondary: #888888;
+      --text-muted: #bbbbbb;
+      --accent: #111111;
+      --accent-hover: #333333;
+      --key-bg: #ffffff;
+      --key-hover: #f0f0f0;
+      --key-active: #e4e4e4;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px 40px;
+      min-height: 100vh;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ── Stats Cards ── */
+    .stats {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 38px;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .stat-card.today .stat-value {
+      font-size: 28px;
+      color: #444;
+    }
+
+    .stat-card.alltime {
+      border-left: 3px solid #111;
+    }
+
+    .stat-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    /* ── Calculator Card ── */
+    .calc-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Display */
+    .display {
+      background: #f9f9f9;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px 12px;
+      margin-bottom: 14px;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .display-preview {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+      min-height: 18px;
+      letter-spacing: 0.03em;
+    }
+
+    .display-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 32px;
+      font-weight: 500;
+      color: var(--text-primary);
+      text-align: right;
+      letter-spacing: -0.02em;
+      transition: transform 0.12s ease;
+    }
+
+    .display-value.pop {
+      transform: scale(1.03);
+    }
+
+    /* Keypad */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .key {
+      background: var(--key-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      height: 64px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.08s, transform 0.06s, border-color 0.08s;
+      box-shadow: var(--shadow);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .key:hover { background: var(--key-hover); border-color: var(--border-dark); }
+    .key:active { background: var(--key-active); transform: scale(0.96); }
+
+    .key-zero {
+      grid-column: span 2;
+      height: 64px;
+    }
+
+    .key-dot {
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    /* Backspace key */
+    .key-back {
+      font-size: 18px;
+      color: var(--text-secondary);
+    }
+
+    /* Add button */
+    .btn-add {
+      width: 100%;
+      height: 60px;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.06s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn-add:hover { background: var(--accent-hover); }
+    .btn-add:active { transform: scale(0.98); }
+
+    /* Footer actions */
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.12s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-secondary:hover { background: #fafafa; border-color: var(--border-dark); color: var(--text-primary); }
+    .btn-secondary.danger:hover { border-color: #e0a0a0; color: #c0392b; background: #fff5f5; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #111;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 20px;
+      border-radius: 100px;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 999;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* PC layout tweaks */
+    @media (min-width: 600px) {
+      body { padding: 40px 24px 60px; align-items: center; }
+      .stat-value { font-size: 44px; }
+      .stat-card.today .stat-value { font-size: 32px; }
+      .key { height: 72px; font-size: 22px; }
+      .key-zero { height: 72px; }
+      .btn-add { height: 66px; font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card alltime">
+      <div class="stat-label">Total Earned — All Time</div>
+      <div class="stat-value" id="allTimeDisplay">$0</div>
+      <div class="stat-meta" id="allTimeMeta">No entries yet</div>
+    </div>
+    <div class="stat-card today">
+      <div class="stat-label">Earned Today</div>
+      <div class="stat-value" id="todayDisplay">$0</div>
+      <div class="stat-meta" id="todayDate"></div>
+    </div>
+  </div>
+
+  <!-- Calculator -->
+  <div class="calc-card">
+    <div class="display">
+      <div class="display-preview" id="preview">0</div>
+      <div class="display-value" id="displayVal">$</div>
+    </div>
+
+    <div class="keypad">
+      <button class="key" onclick="pressKey('7')">7</button>
+      <button class="key" onclick="pressKey('8')">8</button>
+      <button class="key" onclick="pressKey('9')">9</button>
+      <button class="key" onclick="pressKey('4')">4</button>
+      <button class="key" onclick="pressKey('5')">5</button>
+      <button class="key" onclick="pressKey('6')">6</button>
+      <button class="key" onclick="pressKey('1')">1</button>
+      <button class="key" onclick="pressKey('2')">2</button>
+      <button class="key" onclick="pressKey('3')">3</button>
+      <button class="key key-zero" onclick="pressKey('0')">0</button>
+      <button class="key key-dot" onclick="pressKey('.')">.</button>
+    </div>
+
+    <button class="btn-add" onclick="addAmount()">ADD</button>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn-secondary" onclick="clearToday()">Clear Today</button>
+    <button class="btn-secondary danger" onclick="clearAll()">Clear All Time</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Storage Keys ──
+  const KEY_ALL  = 'moneyCounter_allTime';
+  const KEY_TODAY_AMT  = 'moneyCounter_todayAmt';
+  const KEY_TODAY_DATE = 'moneyCounter_todayDate';
+  const KEY_ENTRY_COUNT = 'moneyCounter_entries';
+
+  // ── State ──
+  let currentInput = '';
+
+  function todayStr() {
+    return new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  }
+
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+
+  function load() {
+    const allTime   = parseFloat(localStorage.getItem(KEY_ALL) || '0');
+    const savedDate = localStorage.getItem(KEY_TODAY_DATE) || '';
+    const todayAmt  = savedDate === todayKey()
+      ? parseFloat(localStorage.getItem(KEY_TODAY_AMT) || '0')
+      : 0;
+    const entries   = parseInt(localStorage.getItem(KEY_ENTRY_COUNT) || '0');
+
+    // Reset today if it's a new day
+    if (savedDate !== todayKey()) {
+      localStorage.setItem(KEY_TODAY_DATE, todayKey());
+      localStorage.setItem(KEY_TODAY_AMT, '0');
+    }
+
+    return { allTime, todayAmt, entries };
+  }
+
+  function fmt(n) {
+    if (n === 0) return '$0';
+    return '$' + (n % 1 === 0
+      ? n.toLocaleString()
+      : n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  }
+
+  function render() {
+    const { allTime, todayAmt, entries } = load();
+    document.getElementById('allTimeDisplay').textContent = fmt(allTime);
+    document.getElementById('todayDisplay').textContent   = fmt(todayAmt);
+    document.getElementById('todayDate').textContent      = todayStr();
+    document.getElementById('allTimeMeta').textContent    = entries === 0
+      ? 'No entries yet'
+      : `${entries} ${entries === 1 ? 'entry' : 'entries'} added`;
+  }
+
+  function pressKey(val) {
+    if (val === '.' && currentInput.includes('.')) return;
+    if (val === '0' && currentInput === '0') return;
+    if (val === '.' && currentInput === '') currentInput = '0';
+    currentInput += val;
+    document.getElementById('preview').textContent = currentInput;
+    document.getElementById('displayVal').textContent = '$' + currentInput;
+  }
+
+  function backspace() {
+    currentInput = currentInput.slice(0, -1);
+    document.getElementById('preview').textContent = currentInput || '0';
+    document.getElementById('displayVal').textContent = currentInput ? '$' + currentInput : '$';
+  }
+
+  function addAmount() {
+    const num = parseFloat(currentInput);
+    if (!currentInput || isNaN(num) || num <= 0) { showToast('Enter an amount first'); return; }
+
+    const { allTime, todayAmt, entries } = load();
+    const newAll   = allTime + num;
+    const newToday = todayAmt + num;
+    const newCount = entries + 1;
+
+    localStorage.setItem(KEY_ALL, String(newAll));
+    localStorage.setItem(KEY_TODAY_AMT, String(newToday));
+    localStorage.setItem(KEY_TODAY_DATE, todayKey());
+    localStorage.setItem(KEY_ENTRY_COUNT, String(newCount));
+
+    currentInput = '';
+    document.getElementById('preview').textContent = '0';
+    const dv = document.getElementById('displayVal');
+    dv.textContent = '$';
+
+    // Pop animation on alltime
+    const at = document.getElementById('allTimeDisplay');
+    at.classList.remove('pop');
+    void at.offsetWidth;
+    at.classList.add('pop');
+    setTimeout(() => at.classList.remove('pop'), 200);
+
+    render();
+    showToast('+ ' + fmt(num) + ' added');
+  }
+
+  function clearToday() {
+    if (!confirm('Clear today\'s earnings?')) return;
+    localStorage.setItem(KEY_TODAY_AMT, '0');
+    localStorage.setItem(KEY_TODAY_DATE, todayKey());
+    render();
+    showToast('Today cleared');
+  }
+
+  function clearAll() {
+    if (!confirm('Clear ALL earnings? This cannot be undone.')) return;
+    localStorage.setItem(KEY_ALL, '0');
+    localStorage.setItem(KEY_TODAY_AMT, '0');
+    localStorage.setItem(KEY_TODAY_DATE, todayKey());
+    localStorage.setItem(KEY_ENTRY_COUNT, '0');
+    render();
+    showToast('All data cleared');
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+    else if (e.key === '.') pressKey('.');
+    else if (e.key === 'Enter') addAmount();
+    else if (e.key === 'Backspace') backspace();
+  });
+
+  // Init
+  render();
+</script>
+</body>
+</html>
